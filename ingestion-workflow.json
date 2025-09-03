@@ -1,0 +1,175 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        -32
+      ],
+      "id": "3af49d91-7707-4e60-99fe-863e0148f327",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/ads_spend.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "456b5c4c-6fe7-49e2-b671-2b6b942453fd",
+      "name": "Read/Write Files from Disk",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -32
+      ],
+      "id": "4f055eb3-843f-4a13-bbdc-0a1849e9879e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  query: `\n    INSERT INTO ads_spends\n      (date, platform, account, campaign, country, device,\n       spend, clicks, impressions, conversions, load_date, source_file_name)\n    VALUES\n      ('${$json.date}', '${$json.platform}', '${$json.account}',\n       '${$json.campaign}', '${$json.country}', '${$json.device}',\n       ${$json.spend}, ${$json.clicks}, ${$json.impressions}, ${$json.conversions},\n       NOW(), 'ads_spend.csv');\n  `\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "bb5df76d-2e87-446e-8270-82461877f161",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{$json.query}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "c626ab0a-8a11-44f0-b80a-d4a3c9f55f3e",
+      "name": "Insert into Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "5I4Afo0G0jLjFphS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM ads_spends;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        704,
+        -32
+      ],
+      "id": "367fdd88-1048-44b5-8b86-983406bcb5c6",
+      "name": "Retrieve all items",
+      "credentials": {
+        "postgres": {
+          "id": "5I4Afo0G0jLjFphS",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Insert into Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert into Postgres": {
+      "main": [
+        [
+          {
+            "node": "Retrieve all items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ff1735ae-260d-4b64-8a64-5a5fe2ee0842",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "06288ade3364e90c9a43508fc656e08f79f1c8a2bb425d7dd32268dc3de6897f"
+  },
+  "id": "PAGHpYxCbHy8PXjY",
+  "tags": []
+}
